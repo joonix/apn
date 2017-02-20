@@ -1,0 +1,43 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  generation: 1
+  labels:
+    app: apn
+  name: apn
+  namespace: default
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: apn
+  strategy:
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 1
+    type: RollingUpdate
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: apn
+    spec:
+      containers:
+      - image: joonix/apn
+        imagePullPolicy: Always
+        name: apn
+        resources: {}
+        terminationMessagePath: /dev/termination-log
+        volumeMounts:
+        - name: secrets
+          mountPath: /secrets
+          readOnly: true
+      volumes:
+      - name: secrets
+        secret:
+          secretName: "apple-developer"
+      dnsPolicy: ClusterFirst
+      restartPolicy: Always
+      securityContext: {}
+      terminationGracePeriodSeconds: 30
+status: {}
