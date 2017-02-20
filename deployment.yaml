@@ -28,14 +28,31 @@ spec:
         name: apn
         resources: {}
         terminationMessagePath: /dev/termination-log
+        args:
+          - app
+          - -project=$(PROJECT)
+          - -bundleID=$(bundle)
+          - -cert=/secrets/tls.crt
+          - -key=/secrets/tls.key
+        env:
+          - name: PROJECT
+            valueFrom:
+              configMapKeyRef:
+                name: apn
+                key: project
+          - name: bundle
+            valueFrom:
+              configMapKeyRef:
+                name: apn
+                key: bundle
         volumeMounts:
-        - name: secrets
-          mountPath: /secrets
-          readOnly: true
+          - name: secrets
+            mountPath: /secrets
+            readOnly: true
       volumes:
-      - name: secrets
-        secret:
-          secretName: "apple-developer"
+        - name: secrets
+          secret:
+            secretName: "apple-developer"
       dnsPolicy: ClusterFirst
       restartPolicy: Always
       securityContext: {}
