@@ -12,18 +12,11 @@ import (
 	"golang.org/x/net/http2"
 )
 
-type HTTPError struct {
-	Response *http.Response
-}
-
-func (e HTTPError) Error() string {
-	return fmt.Sprintf("invalid HTTP response (%d)", e.Response.StatusCode)
-}
-
-// https://developer.apple.com/library/prerelease/content/documentation/NetworkingInternet/Conceptual/RemoteNotificationsPG/CommunicatingwithAPNs.html#//apple_ref/doc/uid/TP40008194-CH11-SW1
+// NotificationProvider defines the necessary parameters for sending a notification.
 type NotificationProvider func(msg interface{}, token, identifier string, expiration time.Time) (*http.Response, error)
 
 // NewNotificationProvider prepares an Apple APN provider for sending push notifications.
+// Read more about it in the Apple documentation https://goo.gl/ywkRfD
 func NewNotificationProvider(pub, key, topic string) (NotificationProvider, error) {
 	cert, err := tls.LoadX509KeyPair(pub, key)
 	if err != nil {
@@ -77,4 +70,13 @@ func NewNotificationProvider(pub, key, topic string) (NotificationProvider, erro
 		}
 		return res, err
 	}, nil
+}
+
+// HTTPError will be returned when the HTTP code suggest an error occured when sending notifications.
+type HTTPError struct {
+	Response *http.Response
+}
+
+func (e HTTPError) Error() string {
+	return fmt.Sprintf("invalid HTTP response (%d)", e.Response.StatusCode)
 }

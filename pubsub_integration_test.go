@@ -47,6 +47,8 @@ func TestPubsubNotificationIntegration(t *testing.T) {
 	}
 }
 
+// publish the notification message with target device token specification.
+// Creates the notification topic if it doesn't already exist.
 func publish(t *testing.T, msg *proto.Notification, token []byte) error {
 	ctx := context.Background()
 	client, err := pubsub.NewClient(ctx, gcpProject)
