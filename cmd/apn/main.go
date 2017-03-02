@@ -16,6 +16,9 @@ import (
 	logtools "github.com/joonix/log"
 )
 
+// ttl defines the threshold of what is considered a too old message for delivery.
+const ttl = 10 * time.Minute
+
 func main() {
 	project := flag.String("project", "", "project that we belong to")
 	bundleID := flag.String("bundleID", "", "bundle ID of the APN application")
@@ -70,8 +73,15 @@ func main() {
 			log.Error(err)
 			continue
 		}
-		expiration := time.Now().Add(10 * time.Minute)
-		if _, err = send(&notification, msg.Attributes["to"], msg.Attributes["identifier"], expiration); err != nil {
+
+		// Filter messages that have become too old on the inbound queue.
+		if time.Since(msg.PublishTime) > ttl {
+			log.Debug("skipping message that was expired before processing")
+			msg.Done(true)
+			continue
+		}
+		// Send the notification with an expiry set for the outbound queue.
+		if _, err = send(&notification, msg.Attributes["to"], msg.Attributes["identifier"], msg.PublishTime.Add(ttl)); err != nil {
 			log.Error(err)
 			continue
 		}
