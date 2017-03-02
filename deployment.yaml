@@ -34,6 +34,12 @@ spec:
           - -bundleID=$(bundle)
           - -cert=/secrets/tls.crt
           - -key=/secrets/tls.key
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: 8080
+          initialDelaySeconds: 5
+          periodSeconds: 30
         env:
           - name: PROJECT
             valueFrom:

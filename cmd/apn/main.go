@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
+	"net/http"
 	"os"
 	"time"
 
@@ -52,12 +53,18 @@ func main() {
 
 	subscriberName := *notificationTopic + "-apn"
 	client.CreateSubscription(ctx, subscriberName, topic, time.Minute, nil)
-	it, err := client.Subscription(subscriberName).Pull(ctx)
+	sub := client.Subscription(subscriberName)
+	// Initialize health check endpoint, can be used for triggering a restart upon pubsub errors.
+	http.Handle("/healthz", livenessProbe(sub))
+	go func() {
+		log.Fatal(http.ListenAndServe(":8080", nil))
+	}()
+
+	send, err := apn.NewNotificationProvider(*pub, *key, *bundleID)
 	if err != nil {
 		log.Fatal(err)
 	}
-
-	send, err := apn.NewNotificationProvider(*pub, *key, *bundleID)
+	it, err := sub.Pull(ctx)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -88,4 +95,19 @@ func main() {
 		msg.Done(true)
 		log.Debug("notification sent: ", notification, msg.Attributes)
 	}
+}
+
+// livenessProbe checks whether we can confirm that our subscription still exists.
+func livenessProbe(sub *pubsub.Subscription) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
+		log.Debug("livenessProbe: checking that subscription exists")
+		if ok, err := sub.Exists(ctx); !ok || err != nil {
+			w.WriteHeader(http.StatusServiceUnavailable)
+			if err != nil {
+				log.Error("livenessProbe: ", err)
+			}
+		}
+	})
 }
