@@ -1,0 +1,12 @@
+FROM alpine:3.5
+MAINTAINER Johnny Bergström <johnny@joonix.se>
+
+# Required for TLS.
+RUN apk --update add ca-certificates
+
+# Depends on intermediate build. See cloudbuild.yaml.
+COPY gopath/bin/apn /usr/local/bin/
+ENTRYPOINT /usr/local/bin/apn
+
+EXPOSE 8080
+VOLUME /secrets

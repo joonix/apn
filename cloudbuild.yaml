@@ -1,0 +1,8 @@
+steps:
+  - name: "gcr.io/cloud-builders/go"
+    args: ["install", "github.com/joonix/apn/cmd/apn"]
+    env: ["PROJECT_ROOT=github.com/joonix/apn"]
+  - name: "gcr.io/cloud-builders/docker"
+    args: ["build", "-t", "eu.gcr.io/$PROJECT_ID/apn", "-f", "Dockerfile.alpine", "."]
+
+images: ["eu.gcr.io/$PROJECT_ID/apn"]
