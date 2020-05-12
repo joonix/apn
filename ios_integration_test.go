@@ -60,11 +60,42 @@ func TestIOSNotificationIntegration(t *testing.T) {
 	}
 }
 
-func TestIOSCustomNotificationIntegration(t *testing.T) {
-	type CustomNotification struct {
-		proto.Notification
-		FooField string `json:"foo_field"`
+func TestIOSBackgroundUpdateNotificationIntegration(t *testing.T) {
+	msg := proto.Notification{
+		APS: proto.NotificationAPS{
+			ContentAvailable: 1,
+		},
 	}
+	token, err := base64.StdEncoding.DecodeString(tokenFlag)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	send, err := NewNotificationProvider(certPath, keyPath, bundleID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	identity := "randomuuid1" + time.Now().String()
+	if _, err = send(&msg, fmt.Sprintf("%x", token), identity, time.Now().Add(time.Minute)); err != nil {
+		switch err := err.(type) {
+		case HTTPError:
+			b, _ := httputil.DumpResponse(err.Response, true)
+			t.Log(string(b))
+		}
+		t.Fatal(err)
+	}
+}
+
+type CustomNotification struct {
+	proto.Notification
+	FooField string `json:"foo_field"`
+}
+
+func (n CustomNotification) NotificationPayload() proto.Notification {
+	return n.Notification
+}
+
+func TestIOSCustomNotificationIntegration(t *testing.T) {
 	msg := CustomNotification{
 		Notification: proto.Notification{
 			APS: proto.NotificationAPS{

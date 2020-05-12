@@ -9,11 +9,12 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/joonix/apn/proto"
 	"golang.org/x/net/http2"
 )
 
 // NotificationProvider defines the necessary parameters for sending a notification.
-type NotificationProvider func(msg interface{}, token, identifier string, expiration time.Time) (*http.Response, error)
+type NotificationProvider func(msg proto.NotificationPayload, token, identifier string, expiration time.Time) (*http.Response, error)
 
 // NewNotificationProvider prepares an Apple APN provider for sending push notifications.
 // Read more about it in the Apple documentation https://goo.gl/ywkRfD
@@ -38,7 +39,8 @@ func NewNotificationProvider(pub, key, topic string) (NotificationProvider, erro
 		Transport: &tr,
 	}
 
-	return func(msg interface{}, token, identifier string, expiration time.Time) (*http.Response, error) {
+	// https://developer.apple.com/documentation/usernotifications/setting_up_a_remote_notification_server/sending_notification_requests_to_apns#2947607
+	return func(msg proto.NotificationPayload, token, identifier string, expiration time.Time) (*http.Response, error) {
 		var body bytes.Buffer
 		if err := json.NewEncoder(&body).Encode(msg); err != nil {
 			return nil, err
@@ -56,6 +58,14 @@ func NewNotificationProvider(pub, key, topic string) (NotificationProvider, erro
 		// collapse id max length is 64 bytes.
 		if len(identifier) > 64 {
 			identifier = fmt.Sprintf("%x", sha256.Sum256([]byte(identifier)))
+		}
+
+		if msg.NotificationPayload().APS.ContentAvailable == 1 {
+			req.Header.Set("apns-push-type", "background")
+			req.Header.Set("apns-priority", "5")
+		} else {
+			req.Header.Set("apns-push-type", "alert")
+			req.Header.Set("apns-priority", "10")
 		}
 		req.Header.Set("apns-expiration", fmt.Sprintf("%d", exp))
 		req.Header.Set("apns-collapse-id", identifier)

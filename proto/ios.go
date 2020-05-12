@@ -1,5 +1,9 @@
 package proto
 
+type NotificationPayload interface {
+	NotificationPayload() Notification
+}
+
 // Notification contains the required fields for the apple JSON API.
 // It may be embedded in other structs that provide custom fields which also will
 // be delivered by the remote notification service.
@@ -8,12 +12,17 @@ type Notification struct {
 	APS NotificationAPS `json:"aps"`
 }
 
+func (n Notification) NotificationPayload() Notification {
+	return n
+}
+
 type NotificationAPS struct {
-	Alert            NotificationAlert `json:"alert,omitempty"`
-	Badge            int               `json:"badge,omitempty"`
-	Sound            string            `json:"sound,omitempty"`
-	ContentAvailable int               `json:"content-available,omitempty"`
-	Category         string            `json:"category,omitempty"`
+	Alert NotificationAlert `json:"alert,omitempty"`
+	Badge int               `json:"badge,omitempty"`
+	Sound string            `json:"sound,omitempty"`
+	// ContentAvailable with a value of 1 will configure a background update notification.
+	ContentAvailable int    `json:"content-available,omitempty"`
+	Category         string `json:"category,omitempty"`
 }
 
 type NotificationAlert struct {
