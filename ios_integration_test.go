@@ -18,6 +18,7 @@ var (
 	certPath  string
 	keyPath   string
 	bundleID  string
+	server    string
 )
 
 func init() {
@@ -25,6 +26,7 @@ func init() {
 	flag.StringVar(&tokenFlag, "token", "", "notification token of destination device")
 	flag.StringVar(&certPath, "cert", "cert.pem", "path of public key used for APN authentication")
 	flag.StringVar(&keyPath, "key", "key.pem", "path of private key used for APN authentication")
+	flag.StringVar(&server, "server", "api.development.push.apple.com", "which APN server to use")
 }
 
 // https://developer.apple.com/library/prerelease/content/documentation/NetworkingInternet/Conceptual/RemoteNotificationsPG/CreatingtheNotificationPayload.html#//apple_ref/doc/uid/TP40008194-CH10-SW1
@@ -45,7 +47,7 @@ func TestIOSNotificationIntegration(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	send, err := NewNotificationProvider(certPath, keyPath, bundleID)
+	send, err := NewNotificationProvider(certPath, keyPath, bundleID, server)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -71,7 +73,7 @@ func TestIOSBackgroundUpdateNotificationIntegration(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	send, err := NewNotificationProvider(certPath, keyPath, bundleID)
+	send, err := NewNotificationProvider(certPath, keyPath, bundleID, server)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -115,7 +117,7 @@ func TestIOSCustomNotificationIntegration(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	send, err := NewNotificationProvider(certPath, keyPath, bundleID)
+	send, err := NewNotificationProvider(certPath, keyPath, bundleID, server)
 	if err != nil {
 		t.Fatal(err)
 	}

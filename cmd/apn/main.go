@@ -26,6 +26,7 @@ func main() {
 	notificationTopic := flag.String("notification_topic", "notifications", "which topic to consume notifications from")
 	pub := flag.String("cert", "/secrets/cert.pem", "public client certificate used for APN auth")
 	key := flag.String("key", "/secrets/key.pem", "private client certificate used for APN auth")
+	server := flag.String("server", "api.development.push.apple.com", "which APN server to use")
 	lvl := flag.String("level", log.DebugLevel.String(), "log level")
 	flag.Parse()
 
@@ -60,7 +61,7 @@ func main() {
 		log.Fatal(http.ListenAndServe(":8080", nil))
 	}()
 
-	send, err := apn.NewNotificationProvider(*pub, *key, *bundleID)
+	send, err := apn.NewNotificationProvider(*pub, *key, *bundleID, *server)
 	if err != nil {
 		log.Fatal(err)
 	}

@@ -18,7 +18,7 @@ type NotificationProvider func(msg proto.NotificationPayload, token, identifier 
 
 // NewNotificationProvider prepares an Apple APN provider for sending push notifications.
 // Read more about it in the Apple documentation https://goo.gl/ywkRfD
-func NewNotificationProvider(pub, key, topic string) (NotificationProvider, error) {
+func NewNotificationProvider(pub, key, topic, server string) (NotificationProvider, error) {
 	cert, err := tls.LoadX509KeyPair(pub, key)
 	if err != nil {
 		return nil, err
@@ -45,7 +45,7 @@ func NewNotificationProvider(pub, key, topic string) (NotificationProvider, erro
 		if err := json.NewEncoder(&body).Encode(msg); err != nil {
 			return nil, err
 		}
-		url := fmt.Sprintf("https://api.development.push.apple.com/3/device/%s", token)
+		url := fmt.Sprintf("https://%s/3/device/%s", server, token)
 		req, err := http.NewRequest("POST", url, &body)
 		if err != nil {
 			return nil, err
